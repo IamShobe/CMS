@@ -4,10 +4,9 @@ import ReactDOM from "react-dom";
 
 class App extends React.Component {
 
-    constructor(){
-        super();
-        this.state = {
-        };
+    constructor(props){
+        super(props);
+        this.state = {};
     }
 
     render() {

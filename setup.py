@@ -10,7 +10,7 @@ setup(
     packages=find_packages("src"),
     install_requires=[],
     package_dir={"": "src"},
-    package_data={"car": ["static/*",
+    package_data={"web_template": ["static/*",
                           "static/img/*",
                           "static/font/*",
                           "templates/*"]},
