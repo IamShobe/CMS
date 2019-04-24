@@ -1,16 +1,36 @@
+import axios from "axios";
 import React from "react";
 import ReactDOM from "react-dom";
 
 
+import {Phonebook} from "./phonebook";
+
+import "./style.scss";
+
 class App extends React.Component {
 
-    constructor(props){
+    constructor(props) {
         super(props);
-        this.state = {};
+        this.state = {
+            book: []
+        };
+    }
+    componentDidMount() {
+        axios.get('/static/phonebook.json')
+                .then( (json) => {
+
+                    // The data from the request is available in a .then block
+                    // We return the result using resolve.
+                    console.log(json.data);
+                    this.setState({
+                        ...this.state,
+                        book: json.data
+                    })
+                });
     }
 
     render() {
-        return (<div>"test"</div>);
+        return (<Phonebook book={this.state.book}/>);
     }
 }
 
