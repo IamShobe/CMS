@@ -1,4 +1,4 @@
-from constants import PDU, CType
+from constants import PDU, CType, PassThrough
 from abstract_packet import Packet
 from fields import Field, UnknownSizeField
 
@@ -26,6 +26,42 @@ class AVRTPPacket(Packet):
     def __repr__(self):
         return "{}(label={}, cr={}, validity={})".format(
             self.__class__.__name__, self.seq, self.msg_type, self.validity)
+
+
+class AVCPacket(Packet):
+    BASE_PACKET = AVRTPPacket
+    FIELDS = [
+        Field("header", bits=4, default=0),
+        Field("ctype", bits=4, default=0, type=CType),
+        Field("subunit_type", bits=6, default=0x9),  # panel subunit
+        Field("subunit_id", bits=2, default=0, type=int),
+        Field("op_code", bits=8, default="\x7C", type=int)
+    ]
+
+    def __repr__(self):
+        return "{}(op_code={}, ctype={})".format(self.__class__.__name__,
+                                                 self.op_code,
+                                                 self.ctype)
+
+
+class PassThroughPacket(Packet):
+    BASE_PACKET = AVRTPPacket
+    FIELDS = [
+        Field("header", bits=4, default=0),
+        Field("ctype", bits=4, default=0, type=CType),
+        Field("subunit_type", bits=6, default=0x9),  # panel subunit
+        Field("subunit_id", bits=2, default=0, type=int),
+        Field("op_code", bits=8, default="\x7C", type=int),
+        Field("state_flag", bits=1, default=0, type=int),
+        Field("operation_id", bits=7, type=PassThrough),
+        Field("parameters_length", bits=8, default=0, type=int),
+        UnknownSizeField("parameters", linked_length_field="parameters_length")
+    ]
+
+    def __repr__(self):
+        return "{}(operation_id={}, ctype={})".format(self.__class__.__name__,
+                                                      self.operation_id,
+                                                      self.ctype)
 
 
 class ControlPacket(Packet):

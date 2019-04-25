@@ -1,3 +1,6 @@
+from car.bt.protocols.avctp.implementation.core.structure import \
+    PassThroughPacket, AVCPacket
+from parameter import Parameter
 
 try:
     from functools import lru_cache
@@ -12,18 +15,52 @@ REGISTERED_RESPONSES = {}
 
 
 @lru_cache()
-def get_loaded_messages_types(message_type):
-    classes = message_type.__subclasses__()
-    to_ret = {kls.PDU: kls for kls in classes}
-    for kls in classes:
-        to_ret.update(get_loaded_messages_types(kls))
+def get_loaded_messages_types(original_classes, key):
+    def is_sub_class_of_all(kls, classes):
+        return all(issubclass(kls, k) for k in classes)
+
+    def get_loaded(original_classes, current):
+        to_ret = {}
+        classes = current.__subclasses__()
+        for kls in classes:
+            if is_sub_class_of_all(kls, original_classes):
+                if hasattr(kls, key):
+                    to_ret[getattr(kls, key)] = kls
+
+        for kls in classes:
+            to_ret.update(get_loaded(original_classes, kls))
+
+        return to_ret
+
+    to_ret = {}
+    for k in original_classes:
+        to_ret.update(get_loaded(original_classes, k))
+
     return to_ret
 
 
+# @lru_cache()
+# def get_loaded_passthrough_types(message_type):
+#     classes = message_type.__subclasses__()
+#     to_ret = {kls.OPERATION_ID: kls for kls in classes}
+#     for kls in classes:
+#         to_ret.update(get_loaded_messages_types(kls))
+#     return to_ret
+
+
+PASSTHROUGH_OPCODE = "\x7C"
+VENDOR_OPCODE = "\x00"
+
+VENDOR_ID_FIELD = "pdu_id"
+PASSTHROUGH_ID_FIELD = "operation_id"
+
+PASSTHROUGH_FIELD = "operation_id"
+VENDOR_FIELD = "PDU"
+
+
 class AbstractMessage(Structure):
-    PDU = None
     IS_RESPONSE = 0
-    PACKET_TYPE = None
+    PACKET_TYPE = AVCPacket
 
     def __init__(self, packet=None, **kwargs):
         super(AbstractMessage, self).__init__(**kwargs)
@@ -32,7 +69,7 @@ class AbstractMessage(Structure):
 
     def ignore_keys(self):
         to_ret = super(AbstractMessage, self).ignore_keys()
-        to_ret.extend(["seq", "_packet"])
+        to_ret.extend(["seq", "_packet", "packet"])
         return to_ret
 
     @property
@@ -43,7 +80,6 @@ class AbstractMessage(Structure):
     def packet(self):
         if self._packet is None:
             params = {
-                "pdu_id": self.PDU,
                 "parameters": self.pack_params()
             }
             params.update(self.packet_extra_keys)
@@ -64,18 +100,12 @@ class AbstractMessage(Structure):
         return self.packet.pretty_print()
 
     @classmethod
-    def unpack(cls, raw_packet):
-        unpacked = cls.PACKET_TYPE.unpack(raw_packet)
-        try:
-            if unpacked.cr:
-                kls = \
-                    get_loaded_messages_types(AbstractResponse)[unpacked.pdu_id]
-            else:
-                kls = \
-                    get_loaded_messages_types(AbstractRequest)[unpacked.pdu_id]
+    def get_relavent_kls(cls, raw_packet):
+        raise NotImplementedError("This method must be overrided")
 
-        except:
-            kls = cls
+    @classmethod
+    def unpack(cls, raw_packet):
+        unpacked, kls = cls.get_relavent_kls(raw_packet)
 
         raw_params = unpacked.parameters[0]
 
@@ -90,8 +120,8 @@ class AbstractRequest(AbstractMessage):
     IS_RESPONSE = 0
 
 
-class AbstractControlRequest(AbstractRequest):
-    PACKET_TYPE = ControlPacket
+class AbstractAVCCommand(AbstractMessage):
+    PACKET_TYPE = AVCPacket
     CTYPE = None
 
     @property
@@ -100,25 +130,129 @@ class AbstractControlRequest(AbstractRequest):
             "ctype": self.CTYPE
         }
 
+    @classmethod
+    def get_relavent_kls(cls, raw_packet):
+        field = {
+            PASSTHROUGH_OPCODE: PASSTHROUGH_FIELD,
+            VENDOR_OPCODE: VENDOR_FIELD
+        }
+        id_field = {
+            PASSTHROUGH_OPCODE: PASSTHROUGH_ID_FIELD,
+            VENDOR_OPCODE: VENDOR_ID_FIELD
+        }
 
-class AbstractBrowseRequest(AbstractRequest):
+        packet_type = {
+            PASSTHROUGH_OPCODE: PassThroughPacket,
+            VENDOR_OPCODE: ControlPacket
+        }
+
+        # AV/C packets
+        opcode = raw_packet[5]  # opcode byte
+        unpacked = None
+        try:
+            unpacked = packet_type[opcode].unpack(raw_packet)
+            id_field = id_field[opcode]
+            id_field_value = getattr(unpacked, id_field)
+            handler = get_loaded_messages_types
+            key = field[opcode]
+            direction_cls = AbstractResponse if unpacked.cr else AbstractRequest
+            kls = handler((cls, direction_cls), key)[id_field_value]
+
+        except:
+            if unpacked is None:
+                unpacked = cls.PACKET_TYPE.unpack(raw_packet)
+            kls = cls
+
+        return unpacked, kls
+
+
+class PassThroughRequest(AbstractAVCCommand, AbstractRequest):
+    PACKET_TYPE = PassThroughPacket
+
+    PARAMETERS = [
+        Parameter("operation_id", type=int, length=1),
+    ]
+
+    @property
+    def packet_extra_keys(self):
+        return {
+            "operation_id": self.operation_id,
+        }
+
+
+class AbstractControlRequest(AbstractAVCCommand, AbstractRequest):
+    PACKET_TYPE = ControlPacket
+    PDU = None
+
+    @property
+    def packet_extra_keys(self):
+        extra = super(AbstractControlRequest, self).packet_extra_keys
+        extra["pdu_id"] = self.PDU
+        return extra
+
+
+class AbstractBrowsingCommand(AbstractMessage):
     PACKET_TYPE = BrowsingPacket
+
+    @classmethod
+    def get_relavent_kls(cls, raw_packet):
+        unpacked = cls.PACKET_TYPE.unpack(raw_packet)
+        try:
+            id_field_value = getattr(unpacked, "pdu_id")
+            direction_cls = AbstractResponse if unpacked.cr else AbstractRequest
+            kls = get_loaded_messages_types(
+                (cls, direction_cls), VENDOR_FIELD)[id_field_value]
+
+        except:
+            kls = cls
+
+        return unpacked, kls
+
+
+class AbstractBrowseRequest(AbstractBrowsingCommand, AbstractRequest):
+    PDU = None
+
+    @property
+    def packet_extra_keys(self):
+        return {
+            "pdu_id": self.PDU
+        }
 
 
 class AbstractResponse(AbstractMessage):
     IS_RESPONSE = 1
 
 
-class AbstractControlResponse(AbstractResponse):
-    PACKET_TYPE = ControlPacket
-    CTYPE = None
+class PassThroughResponse(AbstractAVCCommand, AbstractResponse):
+    PACKET_TYPE = PassThroughPacket
+    PARAMETERS = [
+        Parameter("operation_id", type=int, length=1),
+    ]
 
     @property
     def packet_extra_keys(self):
         return {
-            "ctype": self.CTYPE
+            "operation_id": self.OPERATION_ID,
         }
 
 
-class AbstractBrowseResponse(AbstractResponse):
+class AbstractControlResponse(AbstractAVCCommand, AbstractResponse):
+    PACKET_TYPE = ControlPacket
+    PDU = None
+
+    @property
+    def packet_extra_keys(self):
+        extra = super(AbstractControlResponse, self).packet_extra_keys
+        extra["pdu_id"] = self.PDU
+        return extra
+
+
+class AbstractBrowseResponse(AbstractBrowsingCommand, AbstractResponse):
     PACKET_TYPE = BrowsingPacket
+    PDU = None
+
+    @property
+    def packet_extra_keys(self):
+        return {
+            "pdu_id": self.PDU
+        }

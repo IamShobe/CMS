@@ -1,3 +1,5 @@
+import time
+
 from car.bt.protocols.abstract_controller import ProtocolController
 from implementation.core.constants import Error
 from implementation.constants import Scope
@@ -32,12 +34,44 @@ if __name__ == '__main__':
     assert resp.status == Error.SUCCESS
     resp = conn.connection.set_addressed_player(player_id)
     assert resp.status == Error.SUCCESS
-    resp = conn.connection.play_first_item()
-    assert resp.status == Error.SUCCESS
+
+    # time.sleep(3)
+    # conn.connection.play()
+    #
+    # time.sleep(3)
+    # conn.connection.pause()
+    #
+    # time.sleep(3)
+    # conn.connection.stop()
+    #
+    # time.sleep(3)
+    # conn.connection.next_song()
+    #
+    # time.sleep(3)
+    # conn.connection.prev_song()
+    #
+    # time.sleep(3)
+    # abc = conn.connection.skip()
+
+    abc = conn.connection.list_played_items()
+
+    for item in abc.item_list:
+        print "Song Name: {}".format(item.name)
+        for attribute in item.attributes:
+            print "{!r}: {!r}".format(attribute.id, attribute.value)
+
+    item = conn.connection.get_track_info()
+    print ""
+    print "Currenty playing song details:"
+    for attribute in item.attributes:
+        print "{!r}: {!r}".format(attribute.id, attribute.value)
+
+    item = conn.connection.get_play_status()
+    print "Status: {!r}".format(item.play_status)
+    print "Current Position: {}/{}".format(item.song_position, item.song_length)
 
     print conn.connection.unhandled_messages
     conn.close()
-
 
     # request = PlayItemRequest(scope=0, uid=1, uid_counter=0)
     # browse_request = GetFolderItemsRequest(scope=Scope.NOW_PLAYING,

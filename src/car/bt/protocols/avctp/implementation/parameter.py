@@ -14,6 +14,11 @@ class Parameter(object):
         self.callback = callback
         self.default = default
 
+    def __repr__(self):
+        return "{}({!r}, {!r}, length={})".format(
+            self.__class__.__name__, self.name,
+            self.type, self.length)
+
     def validate(self, value):
         if issubclass(type(value), Enum):
             value = value.value
@@ -111,7 +116,7 @@ class SingleUnknownSizeParameter(Parameter):
 
 
 class ComplexParameter(Parameter):
-    def __init__(self, name, linked_length_param, type, length=0,
+    def __init__(self, name, linked_length_param, type, length=1,
                  callback=False):
         super(ComplexParameter, self).__init__(name,
                                                type=type,
@@ -124,7 +129,10 @@ class ComplexParameter(Parameter):
         return True
 
     def pack(self, value):
+        if isinstance(value, list):
+            return "".join(item.pack() for item in value)
+
         return value.pack()
 
     def unpack(self, value, *args, **kwargs):
-        return self.type.unpack(value, count=kwargs["count"])
+        return self.type.unpack(value, *args, **kwargs)

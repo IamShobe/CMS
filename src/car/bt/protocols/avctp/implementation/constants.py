@@ -10,7 +10,7 @@ class Scope(Enum):
 
 
 # ------------ ATTRIBUTES -----------
-class Attribute(Enum):
+class AttributeID(Enum):
     NOT_USED = 0x0
     TITLE = 0x1
     ARTIST_NAME = 0x2
@@ -48,8 +48,8 @@ class MajorPlayerType(Enum):
 
 # -------- Media Types ----------
 class MediaType(Enum):
-    AUDIO = 0x1
-    VIDEO = 0x2
+    AUDIO = 0x0
+    VIDEO = 0x1
 
 
 # --------- PLAYER SUB TYPES -----------

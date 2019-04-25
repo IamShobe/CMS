@@ -4,13 +4,14 @@ import bluetooth
 from bluetooth import get_l2cap_options, set_l2cap_options
 from cached_property import cached_property
 
-from car.bt.protocols.avctp.implementation.core.constants import PDU
+from car.bt.protocols.avctp.implementation.core.constants import PassThrough
 from implementation.constants import Scope
 from implementation.requests import GetTotalNumberOfItemsRequest, \
     GetFolderItemsRequest, SetBrowsedPlayerRequest, SetAddressedPlayerRequest, \
-    PlayItemRequest
+    PlayItemRequest, GetElementAttributesRequest, GetPlayStatusResponse, \
+    GetPlayStatusRequest
 from implementation.abstract_request import \
-    AbstractControlResponse, AbstractBrowseResponse
+    AbstractBrowsingCommand, AbstractAVCCommand, PassThroughRequest
 
 
 class Connection(object):
@@ -68,9 +69,13 @@ class Connection(object):
         return socket
 
     def send_control_message(self, message):
+        message.seq = self.control_seq
+        self.control_seq += 1
         self.control_socket.send(message.pack())
 
     def send_browsing_message(self, message):
+        message.seq = self.browsing_seq
+        self.browsing_seq += 1
         self.browsing_socket.send(message.pack())
 
     def _get_msg(self, msg_seq):
@@ -79,7 +84,7 @@ class Connection(object):
         # force all received messages to be set to receive
         # I encountered that EVENT pdu's are returned as requester.
         content = struct.pack("B", (ord(content[0]) | 2)) + content[1:]
-        msg = AbstractControlResponse.unpack(content)
+        msg = AbstractAVCCommand.unpack(content)
 
         if msg.seq != msg_seq:
             self.unhandled_messages.append(msg)
@@ -96,7 +101,7 @@ class Connection(object):
 
     def read_browsing_channel(self):
         content = self.browsing_socket.recv(self.READ_SIZE)
-        return AbstractBrowseResponse.unpack(content)
+        return AbstractBrowsingCommand.unpack(content)
 
     def connect(self):
         self.control_socket
@@ -111,24 +116,18 @@ class Connection(object):
 
     def get_total_number_of_items(self, scope):
         message = GetTotalNumberOfItemsRequest(scope=scope)
-        message.seq = self.browsing_seq
-        self.browsing_seq += 1
 
         self.send_browsing_message(message)
         return self.read_browsing_channel()
 
     def set_browsed_player(self, player_id):
         message = SetBrowsedPlayerRequest(player_id=player_id)
-        message.seq = self.browsing_seq
-        self.browsing_seq += 1
 
         self.send_browsing_message(message)
         return self.read_browsing_channel()
 
     def set_addressed_player(self, player_id):
         message = SetAddressedPlayerRequest(player_id=player_id)
-        message.seq = self.control_seq
-        self.control_seq += 1
 
         self.send_control_message(message)
         return self.read_control_channel(message.seq)
@@ -137,8 +136,6 @@ class Connection(object):
         message = PlayItemRequest(scope=Scope.NOW_PLAYING,
                                   uid=1,
                                   uid_counter=1)
-        message.seq = self.control_seq
-        self.control_seq += 1
 
         self.send_control_message(message)
         return self.read_control_channel(message.seq)
@@ -148,12 +145,83 @@ class Connection(object):
                                         start_item=0,
                                         end_item=1,
                                         attributes_count=0)
-        message.seq = self.browsing_seq
-        self.browsing_seq += 1
 
         self.send_browsing_message(message)
         return self.read_browsing_channel()
 
+    def list_played_items(self):
+        message = GetFolderItemsRequest(scope=Scope.NOW_PLAYING,
+                                        start_item=0,
+                                        end_item=2,
+                                        attributes_count=0)
+        self.send_browsing_message(message)
+        return self.read_browsing_channel()
+
+    def get_track_info(self):
+        message = GetElementAttributesRequest()
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def get_play_status(self):
+        message = GetPlayStatusRequest()
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def play(self):
+        message = PassThroughRequest(operation_id=PassThrough.PLAY)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def pause(self):
+        message = PassThroughRequest(operation_id=PassThrough.PAUSE)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def stop(self):
+        message = PassThroughRequest(operation_id=PassThrough.STOP)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def next_song(self):
+        message = PassThroughRequest(operation_id=PassThrough.FORWARD)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def prev_song(self):
+        message = PassThroughRequest(operation_id=PassThrough.BACKWARD)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def vol_up(self):
+        message = PassThroughRequest(operation_id=PassThrough.VOL_UP)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def vol_down(self):
+        message = PassThroughRequest(operation_id=PassThrough.VOL_DOWN)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def mute(self):
+        message = PassThroughRequest(operation_id=PassThrough.MUTE)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
+
+    def skip(self):
+        message = PassThroughRequest(operation_id=PassThrough.SKIP)
+
+        self.send_control_message(message)
+        return self.read_control_channel(message.seq)
     # def list_folder(self):
     #     message = GetTotalNumberOfItemsRequest(scope=Scope.MEDIA_PLAYER)
     #     message.seq = self.browsing_seq

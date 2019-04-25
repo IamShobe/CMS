@@ -111,3 +111,15 @@ class Error(Enum):
     NO_AVAILABLE_PLAYERS = 0x15
     ADDRESSED_PLAYER_CHANGED = 0x16
 
+
+# ------------ PASSTHROUGH -------------
+class PassThrough(Enum):
+    SKIP = 0x3c
+    VOL_UP = 0x41
+    VOL_DOWN = 0x42
+    MUTE = 0x43
+    PLAY = 0x44
+    STOP = 0x45
+    PAUSE = 0x46
+    FORWARD = 0x4b
+    BACKWARD = 0x4C

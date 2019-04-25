@@ -105,8 +105,13 @@ class Structure(object):
                 special["count"] = params[param.linked_length_param]
 
             if isinstance(param, ComplexParameter):
-                value = param.unpack(raw_params[current_index:], **special)
-                length = len(value)
+                if counter is not None:
+                    counter.parser_index = current_index
+
+                value = param.unpack(raw_params[current_index:],
+                                     counter=counter, **special)
+
+                length = len("".join(param.pack(item) for item in value))
 
             else:
                 value = param.unpack(

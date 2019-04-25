@@ -1,9 +1,59 @@
 from abstract_request import AbstractControlRequest, AbstractBrowseRequest, \
     AbstractBrowseResponse, AbstractControlResponse
-from complex import List, Item, FolderName
+from complex import List, Item, FolderName, Attribute
 from core import constants
-from constants import Scope, Attribute
+from constants import Scope, AttributeID, PlayStatus
 from parameter import Parameter, ConstantSizeParameter, ComplexParameter
+
+
+# class PauseRequest(AbstractPassThroughRequest):
+#     OPERATION_ID = 0x46
+#     CTYPE = constants.CType.CONTROL
+#
+#
+# class PlayRequest(AbstractPassThroughRequest):
+#     OPERATION_ID = 0x44
+#     CTYPE = constants.CType.CONTROL
+
+class GetElementAttributesRequest(AbstractControlRequest):
+    PDU = constants.PDU.GET_ELEMENT_ATTRIBUTES
+    CTYPE = constants.CType.STATUS
+
+    PARAMETERS = [
+        # current playing index is 0
+        Parameter("identifier", type=int, length=8, default=0),
+        Parameter("attributes_count", type=int, length=1),
+        ConstantSizeParameter("attributes",
+                              linked_length_param="attributes_count",
+                              length=4, type=AttributeID),
+    ]
+
+
+class GetElementAttributesResponse(AbstractControlResponse):
+    PDU = constants.PDU.GET_ELEMENT_ATTRIBUTES
+    CTYPE = constants.CType.STATUS
+
+    PARAMETERS = [
+        Parameter("attributes_count", type=int, length=1),
+        ComplexParameter("attributes", type=List(Attribute),
+                         linked_length_param="attributes_count")
+    ]
+
+
+class GetPlayStatusRequest(AbstractControlRequest):
+    PDU = constants.PDU.GET_PLAY_STATUS
+    CTYPE = constants.CType.STATUS
+
+
+class GetPlayStatusResponse(AbstractControlResponse):
+    PDU = constants.PDU.GET_PLAY_STATUS
+    CTYPE = constants.CType.STATUS
+
+    PARAMETERS = [
+        Parameter("song_length", type=int, length=4, default=0),
+        Parameter("song_position", type=int, length=4, default=0),
+        Parameter("play_status", type=PlayStatus, length=1, default=0),
+    ]
 
 
 class PlayItemRequest(AbstractControlRequest):
@@ -73,7 +123,7 @@ class GetFolderItemsRequest(AbstractBrowseRequest):
         Parameter("attributes_count", type=int, length=1),
         ConstantSizeParameter("attributes",
                               linked_length_param="attributes_count",
-                              type=Attribute),
+                              length=4, type=AttributeID),
     ]
 
 
