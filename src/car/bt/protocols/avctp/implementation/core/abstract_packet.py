@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from numbers import Number
 
+from backports.functools_lru_cache import lru_cache
 from bitarray import bitarray
 from enum import Enum
 
@@ -70,6 +71,7 @@ class Packet(object):
         return cls.create_packet(raw_packet, cls)
 
     @classmethod
+    @lru_cache()
     def unpack(cls, bytes):
         array = bitarray()
         array.frombytes(bytes)

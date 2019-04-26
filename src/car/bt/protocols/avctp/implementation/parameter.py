@@ -1,6 +1,7 @@
 import math
 
 import bitarray
+from backports.functools_lru_cache import lru_cache
 from enum import Enum
 
 from utils import to_number
@@ -44,11 +45,12 @@ class Parameter(object):
 
     def pack(self, value):
         self.validate(value)
-        if issubclass(type(value), Enum):
-            value = value.value
 
         if isinstance(value, basestring):
             return value
+
+        if issubclass(type(value), Enum):
+            value = value.value
 
         array = bitarray.bitarray(bin(value)[2:])
         required_length = self.length * 8
@@ -58,6 +60,7 @@ class Parameter(object):
 
         return new_array.tobytes()
 
+    @lru_cache()
     def unpack(self, value, *args, **kwargs):
         if not issubclass(self.type, basestring):
             value = self.type(to_number(value))
@@ -84,6 +87,7 @@ class ConstantSizeParameter(Parameter):
             for item in value
         ])
 
+    @lru_cache()
     def unpack(self, value, *args, **kwargs):
         return [self.type(value[i * self.length, i * self.length + self.length])
                 for i in xrange(kwargs["count"])]
@@ -108,6 +112,7 @@ class SingleUnknownSizeParameter(Parameter):
 
         return self.type.pack(value)
 
+    @lru_cache()
     def unpack(self, value, *args, **kwargs):
         if issubclass(self.type, basestring):
             return value
@@ -134,5 +139,6 @@ class ComplexParameter(Parameter):
 
         return value.pack()
 
+    @lru_cache()
     def unpack(self, value, *args, **kwargs):
         return self.type.unpack(value, *args, **kwargs)

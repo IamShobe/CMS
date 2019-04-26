@@ -1,24 +1,25 @@
 import logging
-from collections import namedtuple
+from logging import getLogger
 
+import time
+
+import dbus
 import bluetooth
+from bluetool import Bluetooth
+
 from cached_property import cached_property
 
 from car.bt.protocols.avctp.controller import AVCTPController
+from logger.logger import paint_logger
 from utils import fix_keys
+from protocols import bluezutils
+
 from protocols.hfp.controller import HFPController
 from protocols.pbap.controller import PBAPController
 
-logger = logging.getLogger("Bluetooth")
-
-# Create handlers
-c_handler = logging.StreamHandler()
-
-c_format = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-c_handler.setFormatter(c_format)
-
-logger.addHandler(c_handler)
+logger = getLogger("Bluetooth")
 logger.setLevel(logging.DEBUG)
+bus = dbus.SystemBus()
 
 
 class Service(object):
@@ -44,8 +45,11 @@ class Service(object):
 class BTDevice(object):
     SERVICES_SCAN_TRIES = 3
 
-    def __init__(self, address):
+    def __init__(self, address, adapter):
         self.address = address
+        self.adapter = adapter
+
+        self.agent = bluezutils.find_device(self.address)
         self.pbap = PBAPController(self.address)
         self.hfp = HFPController(self.address)
         self.avctp = AVCTPController(self.address)
@@ -77,16 +81,42 @@ class BTDevice(object):
                 "Device doesn't seemed to have bluetooth services")
 
     def connect(self):
-        logger.debug("Connecting to all available services...")
+        logger.info("Connecting to all available services...")
+        logger.info("Pairing and trusting device...")
+        success = self.adapter.pair(self.address)
+        if not success:
+            logger.error("Could not pair with device")
+            raise RuntimeError("Could not pair with device")
+
+        success = self.adapter.trust(self.address)
+        if not success:
+            logger.error("Could not trust device")
+            raise RuntimeError("Could not trust device")
+
+        logger.info("Paired and trusted successfully")
+
         self.pbap.connect(self.services[self.pbap.SERVICE_CLASS].port)
+        logger.info("Service pbap connected!")
         self.hfp.connect(self.services[self.hfp.SERVICE_CLASS].port)
+        logger.info("Service hfp connected!")
         self.avctp.connect(self.services[self.avctp.SERVICE_CLASS].port)
+        logger.info("Service avctp connected!")
+
+        logger.info("All services connected!")
 
     def close(self):
-        logger.debug("Closing all available services connections...")
+        logger.info("Closing all available services connections...")
         self.pbap.close()
+        logger.info("Service pbap disconnected!")
         self.hfp.close()
+        logger.info("Service hfp disconnected!")
         self.avctp.close()
+        logger.info("Service avctp disconnected!")
+
+        logger.info("All services disconnected!")
+
+        logger.info("Disconnecting from agent...")
+        self.adapter.disconnect(self.address)
 
 
 class BTController(object):
@@ -94,16 +124,18 @@ class BTController(object):
 
     def __init__(self):
         self.cached_addresses = {}
+        self.adapter = Bluetooth()
 
     def probe_devices(self):
         logger.info("Probing for nearby devices...")
-        near_devices = bluetooth.discover_devices(lookup_names=True)
-        for device_address, device_name in near_devices:
+        self.adapter.scan()
+        devices = self.adapter.get_available_devices()
+        for device in devices:
+            device_name = device["name"]
+            device_address = device["mac_address"]
             self.cached_addresses[device_name.lower()] = device_address
             logger.debug("Discovered device: {} - {}".format(device_name,
                                                              device_address))
-
-        return near_devices
 
     def get_address_from_cache(self, name):
         if name.lower() not in self.cached_addresses:
@@ -134,21 +166,27 @@ class BTController(object):
             logger.error("Device `{}` couldn't be found".format(name))
             raise RuntimeError("Device `{}` couldn't be found!".format(name))
 
+    def get_client(self, address):
+        return BTDevice(address, self.adapter)
+
 
 if __name__ == '__main__':
+    paint_logger(logger)
     controller = BTController()
     controller.probe_devices()
-    controller.find_address_of("OnePlus 3")
-    device = BTDevice(controller.find_address_of("OnePlus 3"))
+    address = controller.find_address_of("OnePlus 3")
+    device = controller.get_client(address)
     device.services
     device.connect()
+
+    a = device.avctp.connection.play()
+    time.sleep(10)
 
     # phone_book = device.get_history()
     # phone_book = device.pbap.get_phonebook()
     #
     # with open('phonebook.json', "wb") as f:
     #     json.dump([contact.to_dict() for contact in phone_book], f)
-
 
     device.close()
 

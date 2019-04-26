@@ -104,6 +104,7 @@ class AbstractMessage(Structure):
         raise NotImplementedError("This method must be overrided")
 
     @classmethod
+    @lru_cache()
     def unpack(cls, raw_packet):
         unpacked, kls = cls.get_relavent_kls(raw_packet)
 

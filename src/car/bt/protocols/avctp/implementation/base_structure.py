@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from backports.functools_lru_cache import lru_cache
 from bitarray import bitarray
 
 from parameter import ConstantSizeParameter, ComplexParameter, \
@@ -47,8 +48,9 @@ class Structure(object):
             setattr(self, linked_param.name, len(value))
 
         if isinstance(param, ComplexParameter):
-            linked_param = self.params_dict[param.linked_length_param]
-            setattr(self, linked_param.name, len(param.type.pack(value)))
+            if param.linked_length_param:
+                linked_param = self.params_dict[param.linked_length_param]
+                setattr(self, linked_param.name, len(param.type.pack(value)))
 
         param.validate(value)
         self.assigned_params[key] = value
@@ -89,6 +91,7 @@ class Structure(object):
         return params
 
     @classmethod
+    @lru_cache()
     def unpack_params(cls, raw_params, kls=None, counter=None):
         current_index = 0
         params = OrderedDict()
@@ -101,8 +104,12 @@ class Structure(object):
                 special["length"] = params[param.linked_length_param]
 
             elif isinstance(param, (ConstantSizeParameter, ComplexParameter)):
-                length = params[param.linked_length_param] * param.length
-                special["count"] = params[param.linked_length_param]
+                if param.linked_length_param:
+                    length = params[param.linked_length_param] * param.length
+                    special["count"] = params[param.linked_length_param]
+
+                else:
+                    special["count"] = 1
 
             if isinstance(param, ComplexParameter):
                 if counter is not None:
@@ -111,7 +118,11 @@ class Structure(object):
                 value = param.unpack(raw_params[current_index:],
                                      counter=counter, **special)
 
-                length = len("".join(param.pack(item) for item in value))
+                if isinstance(value, list):
+                    length = len("".join(param.pack(item) for item in value))
+
+                else:
+                    length = len(param.pack(value))
 
             else:
                 value = param.unpack(

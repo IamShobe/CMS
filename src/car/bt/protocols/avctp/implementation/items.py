@@ -1,49 +1,12 @@
+from backports.functools_lru_cache import lru_cache
+
+from list import List
+from data_types import Attribute
+from utils import get_linked_item
 from base_structure import Structure
 from parameter import Parameter, SingleUnknownSizeParameter, ComplexParameter
 from constants import ItemType, MajorPlayerType, SubPlayerType, PlayStatus, \
-    FolderType, Bool, MediaType, AttributeID
-
-
-def get_linked_item(id, kls):
-    classes = kls.__subclasses__()
-    for sub_kls in classes:
-        if id in sub_kls.TYPE_ID:
-            return sub_kls
-
-        if len(sub_kls.__subclasses__()) > 0:
-            ret_val = get_linked_item(id, sub_kls)
-            if ret_val:
-                return ret_val
-
-
-class List(object):
-    class Counter(object):
-        def __init__(self):
-            self.index = 0
-
-    def __init__(self, type):
-        self.type = type
-
-    @classmethod
-    def pack(cls, items):
-        return "".join(item.pack() for item in items)
-
-    def unpack(self, raw_text, count=1, counter=None):
-        to_ret = []
-        current_counter = 0
-        current_buffer = raw_text
-        for _ in xrange(count):
-            _counter = self.Counter()
-            to_ret.append(self.type.unpack(current_buffer, counter=_counter))
-            current_counter += _counter.index
-            current_buffer = current_buffer[_counter.index:]
-
-            if counter:
-                global_counter = current_counter + counter.parser_index
-                if global_counter >= counter.max_length:
-                    break
-
-        return to_ret
+    FolderType, Bool, MediaType
 
 
 class Item(Structure):
@@ -56,6 +19,7 @@ class Item(Structure):
         return "".join(self.pack_params())
 
     @classmethod
+    @lru_cache()
     def unpack(cls, value, counter=None):
         unpacked = cls.unpack_params(value)
         counter.max_length = unpacked["item_length"]
@@ -65,7 +29,7 @@ class Item(Structure):
 
 
 class ItemClass(Item):
-    TYPE_ID = []
+    TYPE_ID = None
     ITEM_PARAMETERS = []
 
     @classmethod
@@ -74,7 +38,7 @@ class ItemClass(Item):
 
 
 class MediaPlayerItem(ItemClass):
-    TYPE_ID = [ItemType.MEDIA_PLAYER]
+    TYPE_ID = ItemType.MEDIA_PLAYER
     ITEM_PARAMETERS = [
         Parameter("player_id", type=int, length=2),
         Parameter("major_player_type", type=MajorPlayerType, length=1),
@@ -89,7 +53,7 @@ class MediaPlayerItem(ItemClass):
 
 
 class FolderItem(ItemClass):
-    TYPE_ID = [ItemType.FOLDER_ITEM]
+    TYPE_ID = ItemType.FOLDER_ITEM
     ITEM_PARAMETERS = [
         Parameter("uid", type=int, length=8),
         Parameter("folder_type", type=FolderType, length=1),
@@ -100,24 +64,8 @@ class FolderItem(ItemClass):
     ]
 
 
-class Attribute(Structure):
-    PARAMETERS = [
-        Parameter("id", type=AttributeID, length=4),
-        Parameter("character_set", type=int, length=2),
-        Parameter("value_length", type=int, length=2),
-        SingleUnknownSizeParameter("value", linked_length_param="value_length"),
-    ]
-
-    def pack(self):
-        return "".join(self.pack_params())
-
-    @classmethod
-    def unpack(cls, value, counter=None):
-        return cls(**cls.unpack_params(value, counter=counter))
-
-
 class MediaElement(ItemClass):
-    TYPE_ID = [ItemType.MEDIA_ELEMENT]
+    TYPE_ID = ItemType.MEDIA_ELEMENT
     ITEM_PARAMETERS = [
         Parameter("uid", type=int, length=8),
         Parameter("media_type", type=MediaType, length=1),
@@ -127,11 +75,4 @@ class MediaElement(ItemClass):
         Parameter("attributes_count", type=int, length=1),
         ComplexParameter("attributes", type=List(Attribute),
                          linked_length_param="attributes_count")
-    ]
-
-
-class FolderName(Structure):
-    PARAMETERS = [
-        Parameter("name_length", type=int, length=2),
-        SingleUnknownSizeParameter("name", linked_length_param="name_length"),
     ]

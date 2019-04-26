@@ -1,3 +1,6 @@
+from backports.functools_lru_cache import lru_cache
+
+
 class Packet(object):
     BASE_PACKET = None
     FIELDS = []
@@ -17,6 +20,7 @@ class Packet(object):
         pass
 
     @classmethod
+    @lru_cache()
     def unpack(cls, bytes):
         pass
 

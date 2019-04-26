@@ -71,7 +71,7 @@ class PDU(Enum):
 
 
 # ------------ EVENTS -------------
-class Event(Enum):
+class EventID(Enum):
     PLAYBACK_STATUS_CHANGED = 0x1
     TRACK_CHANGED = 0x2
     TRACK_REACHED_END = 0x3

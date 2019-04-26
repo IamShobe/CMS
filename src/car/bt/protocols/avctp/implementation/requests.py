@@ -1,9 +1,12 @@
+from list import List
+from items import Item
+from events import Event
+from core import constants
+from data_types import Attribute, FolderName
+from constants import Scope, AttributeID, PlayStatus, Direction
+from parameter import Parameter, ConstantSizeParameter, ComplexParameter
 from abstract_request import AbstractControlRequest, AbstractBrowseRequest, \
     AbstractBrowseResponse, AbstractControlResponse
-from complex import List, Item, FolderName, Attribute
-from core import constants
-from constants import Scope, AttributeID, PlayStatus
-from parameter import Parameter, ConstantSizeParameter, ComplexParameter
 
 
 # class PauseRequest(AbstractPassThroughRequest):
@@ -99,7 +102,7 @@ class NotificationRequest(AbstractControlRequest):
     CTYPE = constants.CType.NOTIFY
 
     PARAMETERS = [
-        Parameter("event_id", type=constants.Event, length=1),
+        Parameter("event_id", type=constants.EventID, length=1),
         Parameter("playback_inverval", type=int, length=4, default=0),
     ]
 
@@ -109,7 +112,26 @@ class NotificationResponse(AbstractControlResponse):
     CTYPE = constants.CType.NOTIFY
 
     PARAMETERS = [
-        Parameter("event_id", type=constants.Event, length=1),
+        ComplexParameter("event", type=Event, linked_length_param=None)
+    ]
+
+
+class ChangePathRequest(AbstractBrowseRequest):
+    PDU = constants.PDU.CHANGE_PATH
+
+    PARAMETERS = [
+        Parameter("uid_counter", type=int, length=2),
+        Parameter("direction", type=Direction, length=1),
+        Parameter("uid", type=int, length=8),
+    ]
+
+
+class ChangePathResponse(AbstractBrowseResponse):
+    PDU = constants.PDU.CHANGE_PATH
+
+    PARAMETERS = [
+        Parameter("status", type=constants.Error, length=1),
+        Parameter("number_of_items", type=int, length=4),
     ]
 
 
@@ -136,6 +158,31 @@ class GetFolderItemsResponse(AbstractBrowseResponse):
         Parameter("number_of_items", type=int, length=2),
         ComplexParameter("item_list", type=List(Item),
                          linked_length_param="number_of_items")
+    ]
+
+
+class GetItemAttributesRequest(AbstractBrowseRequest):
+    PDU = constants.PDU.GET_ITEM_ATTRIBUTES
+
+    PARAMETERS = [
+        Parameter("scope", type=Scope, length=1),
+        Parameter("uid", type=int, length=8),
+        Parameter("uid_counter", type=int, length=2),
+        Parameter("attributes_count", type=int, length=1),
+        ConstantSizeParameter("attributes",
+                              linked_length_param="attributes_count",
+                              length=4, type=AttributeID),
+    ]
+
+
+class GetItemAttributesResponse(AbstractBrowseResponse):
+    PDU = constants.PDU.GET_ITEM_ATTRIBUTES
+
+    PARAMETERS = [
+        Parameter("status", type=constants.Error, length=1),
+        Parameter("attributes_count", type=int, length=1),
+        ComplexParameter("attributes", type=List(Attribute),
+                         linked_length_param="attributes_count")
     ]
 
 

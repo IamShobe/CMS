@@ -1,23 +1,25 @@
 import logging
-from logging import getLogger
 
 
 class ProtocolController(object):
     SERVICE_CLASS = NotImplemented
 
-    def __init__(self, address, logger=getLogger("Bluetooth")):
+    def __init__(self, address, logger=logging.getLogger("Bluetooth")):
         self.address = address
         self.logger = logger
 
         self.connection = None
 
     def log(self, message, context="General", level=logging.DEBUG,
-            single_line=False):
+            single_line=False, logger=None):
         if single_line:
             message = message.replace("\r", "\\r").replace("\n", ", ")
 
         for line in message.split("\n"):
-            self.logger.log(level, "{} - {} - {}".format(
+            if logger is None:
+                logger = self.logger
+
+            logger.log(level, "{} - {} - {}".format(
                 self.__class__.__name__, context, line))
 
     def connect(self, port):
@@ -39,4 +41,5 @@ class ProtocolController(object):
         self.log("Closed!")
 
     def __del__(self):
-        self.close()
+        if self.connection:
+            self.close()

@@ -1,13 +1,18 @@
+import logging
+
 import bluetooth
 
 from car.bt.protocols.abstract_controller import ProtocolController
+
+
+hfp_logger = logging.getLogger("hfp-protocol")
 
 
 class HFPController(ProtocolController):
     SERVICE_CLASS = "111F"
 
     def write_message(self, msg, context="General"):
-        self.log("Writing: {}".format(msg), context=context)
+        self.log("Writing: {}".format(msg), context=context, logger=hfp_logger)
         self.connection.send("{}\r".format(msg))
 
     def read_until_cr(self, max_c=100):
@@ -48,7 +53,7 @@ class HFPController(ProtocolController):
     def execute_command(self, command, context="General"):
         self.write_message(command, context=context)
         self.log("Receiving: " + self.read_until_ok(), context=context,
-                 single_line=True)
+                 single_line=True, logger=hfp_logger)
 
     def _connect(self, port):
         s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)

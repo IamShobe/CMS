@@ -1,7 +1,7 @@
 import time
 
 from car.bt.protocols.abstract_controller import ProtocolController
-from implementation.core.constants import Error
+from implementation.core.constants import Error, EventID
 from implementation.constants import Scope
 from connection import Connection
 
@@ -29,7 +29,8 @@ if __name__ == '__main__':
     assert resp.status == Error.SUCCESS
     player = resp.item_list[0]
     player_id = player.player_id
-    print player.name
+    # print player.features_mask
+    # print player.name
     resp = conn.connection.set_browsed_player(player_id)
     assert resp.status == Error.SUCCESS
     resp = conn.connection.set_addressed_player(player_id)
@@ -55,22 +56,26 @@ if __name__ == '__main__':
 
     abc = conn.connection.list_played_items()
 
-    for item in abc.item_list:
-        print "Song Name: {}".format(item.name)
-        for attribute in item.attributes:
-            print "{!r}: {!r}".format(attribute.id, attribute.value)
+    # for item in abc.item_list:
+    #     print "Song Name: {}".format(item.name)
+    #     for attribute in item.attributes:
+    #         print "{!r}: {!r}".format(attribute.id, attribute.value)
 
-    item = conn.connection.get_track_info()
-    print ""
-    print "Currenty playing song details:"
-    for attribute in item.attributes:
-        print "{!r}: {!r}".format(attribute.id, attribute.value)
+    playing = conn.connection.get_track_info()
+    # print ""
+    # print "Currenty playing song details:"
+    # for attribute in playing.attributes:
+    #     print "{!r}: {!r}".format(attribute.id, attribute.value)
 
     item = conn.connection.get_play_status()
-    print "Status: {!r}".format(item.play_status)
-    print "Current Position: {}/{}".format(item.song_position, item.song_length)
+    # print "Status: {!r}".format(item.play_status)
+    # print "Current Position: {}/{}".format(item.song_position, item.song_length)
 
-    print conn.connection.unhandled_messages
+    event = conn.connection.register_event(EventID.TRACK_CHANGED)
+    item = conn.connection.get_track_image_of(event.event.identifier)
+    item2 = conn.connection.get_current_track_image()
+
+    # print conn.connection.unhandled_messages
     conn.close()
 
     # request = PlayItemRequest(scope=0, uid=1, uid_counter=0)

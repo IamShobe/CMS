@@ -38,6 +38,15 @@ class PlayStatus(Enum):
     REV_SEEK = 0x4
 
 
+# ------------ Batt Status ------------
+class BatteryStatus(Enum):
+    NORMAL = 0x0
+    WARNING = 0x1
+    CRITICAL = 0x2
+    EXTERNAL = 0x3
+    FULL_CHARGE = 0x4
+
+
 # ---------- PLAYER TYPES ----------
 class MajorPlayerType(Enum):
     AUDIO = 0x1
@@ -75,3 +84,8 @@ class Bool(Enum):
     NO = 0x0
     YES = 0x1
 
+
+# -------- DIRECTION ---------
+class Direction(Enum):
+    FOLDER_UP = 0x0
+    FOLDER_DOWN = 0x1
