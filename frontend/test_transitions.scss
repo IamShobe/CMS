@@ -1,0 +1,37 @@
+$transition-duration: 100ms;
+
+.transition-group {
+  position: relative;
+  flex-grow: 1;
+}
+
+.transition-group > * {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.page-enter {
+  opacity: 0;
+  transform: translateX(-10rem);
+  transition: all $transition-duration ease-out;
+  transition-delay: $transition-duration;
+}
+
+.page-enter.page-enter-active {
+  opacity: 1;
+  transform: none;
+}
+
+.page-exit {
+  opacity: 1;
+  transition: all $transition-duration linear;
+}
+
+.page-exit.page-exit-active {
+  opacity: 0;
+}

@@ -1,20 +1,55 @@
-import subprocess
+import json
 
-import bluetooth
+from flask import Flask, request
+
+from car.bt.controller import BTController, logger
+from logger.logger import paint_logger
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+bt_controller = BTController()
+paint_logger(logger)
 
 
-PASSKEY = 123456
-PORT = 1
+@app.route('/api/devices/scan/')
+def scan_devices():
+    devices = bt_controller.probe_devices()
+    response = app.response_class(
+        response=json.dumps(devices),
+        status=200,
+        mimetype='application/json'
+    )
+
+    return response
 
 
-def make_connection(addr):
-    # kill any "bluetooth-agent" process that is already running
-    subprocess.call("kill -9 `pidof bluetooth-agent`", shell=True)
+@app.route('/api/devices/')
+def get_cached_devices():
+    devices = bt_controller.cached_addresses
+    response = app.response_class(
+        response=json.dumps(devices),
+        status=200,
+        mimetype='application/json'
+    )
 
-    # Start a new "bluetooth-agent" process where XXXX is the passkey
-    status = subprocess.call("bluetooth-agent {} &".format(PASSKEY), shell=True)
+    return response
 
-    # Now, connect in the same way as always with PyBlueZ
-    s = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    s.connect((addr, PORT))
-    return s
+
+@app.route('/api/pair', methods=["POST"])
+def connect_device():
+    data = request.get_json(force=True)
+    to_connect = data['address']
+    device = bt_controller.get_client(to_connect)
+    device.pair()
+    # device.close()
+    response = app.response_class(
+        response=json.dumps({}),
+        status=200,
+        mimetype='application/json'
+    )
+
+    return response
+
+
+if __name__ == '__main__':
+    app.run(port=8090)

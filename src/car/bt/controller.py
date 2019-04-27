@@ -3,7 +3,6 @@ from logging import getLogger
 
 import time
 
-import dbus
 import bluetooth
 from bluetool import Bluetooth
 
@@ -19,7 +18,6 @@ from protocols.pbap.controller import PBAPController
 
 logger = getLogger("Bluetooth")
 logger.setLevel(logging.DEBUG)
-bus = dbus.SystemBus()
 
 
 class Service(object):
@@ -80,8 +78,7 @@ class BTDevice(object):
             raise RuntimeError(
                 "Device doesn't seemed to have bluetooth services")
 
-    def connect(self):
-        logger.info("Connecting to all available services...")
+    def pair(self):
         logger.info("Pairing and trusting device...")
         success = self.adapter.pair(self.address)
         if not success:
@@ -94,6 +91,10 @@ class BTDevice(object):
             raise RuntimeError("Could not trust device")
 
         logger.info("Paired and trusted successfully")
+
+    def connect(self):
+        logger.info("Connecting to all available services...")
+        self.pair()
 
         self.pbap.connect(self.services[self.pbap.SERVICE_CLASS].port)
         logger.info("Service pbap connected!")
@@ -136,6 +137,8 @@ class BTController(object):
             self.cached_addresses[device_name.lower()] = device_address
             logger.debug("Discovered device: {} - {}".format(device_name,
                                                              device_address))
+
+        return self.cached_addresses
 
     def get_address_from_cache(self, name):
         if name.lower() not in self.cached_addresses:
