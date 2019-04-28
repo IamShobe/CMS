@@ -38,27 +38,47 @@ export default class Phonebook extends React.Component {
         return to_ret;
     }
 
+
+    handleScroll = (status, target) => {
+        // const {scrollTop, scrollLeft} = target;
+        this.list.Grid.handleScrollEvent({scrollTop:target.offset.y, scrollLeft: target.offset.x});
+
+    };
+
     render() {
         return (
             <div className="container ">
-                <Scrollbar damping={0.05}>
-                    {this.renderList()}
-                </Scrollbar>
+
+                {/*{this.renderList()}*/}
+                <AutoSizer>
+                    {
+                        ({width, height}) => {
+                            return <Scrollbar damping={0.02}
+                                              style={{
+                                                  width: width,
+                                                  height: height
+                                              }}
+                                              ref={node => this.scroll = node}
+                                              onScroll={this.handleScroll.bind(this)}>
+                                <List
+                                    className={"contacts"}
+                                    rowCount={this.props.book.length}
+                                    width={width}
+                                    height={height}
+                                    rowHeight={100}
+                                    rowRenderer={this.renderRow}
+                                    ref={instance => (this.list = instance)}
+                                    style={{
+                                        overflowX: false,
+                                        overflowY: false
+                                    }}/>
+                            </Scrollbar>
+                        }
+                    }
+                </AutoSizer>
+
                 {/*<PerfectScrollbar className="contacts">*/}
-                {/*    /!*<AutoSizer>*!/*/}
-                {/*    /!*    {*!/*/}
-                {/*    /!*        ({width, height}) => {*!/*/}
-                {/*    /!*            return <List*!/*/}
-                {/*    /!*                className={"contacts"}*!/*/}
-                {/*    /!*                rowCount={this.props.book.length}*!/*/}
-                {/*    /!*                width={width}*!/*/}
-                {/*    /!*                height={height}*!/*/}
-                {/*    /!*                rowHeight={100}*!/*/}
-                {/*    /!*                rowRenderer={this.renderRow}*!/*/}
-                {/*    /!*            />*!/*/}
-                {/*    /!*        }*!/*/}
-                {/*    /!*    }*!/*/}
-                {/*    /!*</AutoSizer>*!/*/}
+
 
                 {/*</PerfectScrollbar>*/}
             </div>
