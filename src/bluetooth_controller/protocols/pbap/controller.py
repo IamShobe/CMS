@@ -1,7 +1,7 @@
 from PyOBEX import client, headers, responses
 
-from parsers import vcard_parser
-from car.bt.protocols.abstract_controller import ProtocolController
+from .parsers import vcard_parser
+from ..abstract_controller import ProtocolController
 
 
 class PBAPController(ProtocolController):

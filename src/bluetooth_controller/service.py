@@ -2,8 +2,10 @@ import json
 
 from flask import Flask, request
 
-from car.bt.controller import BTController, logger
 from logger.logger import paint_logger
+
+from .controller import BTController, logger
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'

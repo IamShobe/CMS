@@ -1,9 +1,8 @@
 from collections import OrderedDict
 
 from backports.functools_lru_cache import lru_cache
-from bitarray import bitarray
 
-from parameter import ConstantSizeParameter, ComplexParameter, \
+from .parameter import ConstantSizeParameter, ComplexParameter, \
     SingleUnknownSizeParameter
 
 

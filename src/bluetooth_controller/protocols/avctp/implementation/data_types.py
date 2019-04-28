@@ -1,8 +1,8 @@
 from backports.functools_lru_cache import lru_cache
 
-from constants import AttributeID
-from base_structure import Structure
-from parameter import Parameter, SingleUnknownSizeParameter
+from .constants import AttributeID
+from .base_structure import Structure
+from .parameter import Parameter, SingleUnknownSizeParameter
 
 
 class FolderName(Structure):

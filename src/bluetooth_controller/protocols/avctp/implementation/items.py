@@ -1,11 +1,11 @@
 from backports.functools_lru_cache import lru_cache
 
-from list import List
-from data_types import Attribute
-from utils import get_linked_item
-from base_structure import Structure
-from parameter import Parameter, SingleUnknownSizeParameter, ComplexParameter
-from constants import ItemType, MajorPlayerType, SubPlayerType, PlayStatus, \
+from .list import List
+from .data_types import Attribute
+from .utils import get_linked_item
+from .base_structure import Structure
+from .parameter import Parameter, SingleUnknownSizeParameter, ComplexParameter
+from .constants import ItemType, MajorPlayerType, SubPlayerType, PlayStatus, \
     FolderType, Bool, MediaType
 
 

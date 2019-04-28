@@ -1,9 +1,8 @@
 # taken from https://raw.githubusercontent.com/jowave/vcard2to3/master/vcard2to3.py
 # and altered alittlebit
-from StringIO import StringIO
-
 import re
 import quopri
+from StringIO import StringIO
 
 
 class VCard(object):

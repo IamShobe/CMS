@@ -2,7 +2,7 @@ import logging
 
 import bluetooth
 
-from car.bt.protocols.abstract_controller import ProtocolController
+from ..abstract_controller import ProtocolController
 
 
 hfp_logger = logging.getLogger("hfp-protocol")

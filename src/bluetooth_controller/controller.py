@@ -1,20 +1,18 @@
+import time
 import logging
 from logging import getLogger
 
-import time
 
 import bluetooth
 from bluetool import Bluetooth
-
 from cached_property import cached_property
 
-from car.bt.protocols.avctp.controller import AVCTPController
 from logger.logger import paint_logger
-from utils import fix_keys
-from protocols import bluezutils
 
-from protocols.hfp.controller import HFPController
-from protocols.pbap.controller import PBAPController
+from .utils import fix_keys
+from .protocols.hfp.controller import HFPController
+from .protocols.pbap.controller import PBAPController
+from .protocols.avctp.controller import AVCTPController
 
 logger = getLogger("Bluetooth")
 logger.setLevel(logging.DEBUG)
@@ -47,7 +45,6 @@ class BTDevice(object):
         self.address = address
         self.adapter = adapter
 
-        self.agent = bluezutils.find_device(self.address)
         self.pbap = PBAPController(self.address)
         self.hfp = HFPController(self.address)
         self.avctp = AVCTPController(self.address)

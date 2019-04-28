@@ -1,14 +1,12 @@
-from car.bt.protocols.avctp.implementation.core.structure import \
-    PassThroughPacket, AVCPacket
-from parameter import Parameter
-
 try:
     from functools import lru_cache
 except ImportError:
     from backports.functools_lru_cache import lru_cache
 
-from core.structure import ControlPacket, AVRTPPacket, BrowsingPacket
-from base_structure import Structure
+from .parameter import Parameter
+from .base_structure import Structure
+from .core.structure import PassThroughPacket, AVCPacket
+from .core.structure import ControlPacket, AVRTPPacket, BrowsingPacket
 
 REGISTERED_REQUESTS = {}
 REGISTERED_RESPONSES = {}

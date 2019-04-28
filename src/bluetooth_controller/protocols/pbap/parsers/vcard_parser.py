@@ -4,7 +4,7 @@ from collections import namedtuple
 
 import vobject
 
-from vcard2to3 import convert
+from .vcard2to3 import convert
 
 
 def fix_encoding_issues(text):

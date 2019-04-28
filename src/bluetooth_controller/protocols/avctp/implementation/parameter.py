@@ -4,7 +4,7 @@ import bitarray
 from backports.functools_lru_cache import lru_cache
 from enum import Enum
 
-from utils import to_number
+from .utils import to_number
 
 
 class Parameter(object):

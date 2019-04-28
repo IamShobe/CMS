@@ -1,17 +1,17 @@
-import logging
 import struct
+import logging
 
 import bluetooth
 from bluetooth import get_l2cap_options, set_l2cap_options
 from cached_property import cached_property
 
-from implementation.core.constants import PassThrough, CType
-from implementation.constants import Scope, AttributeID
-from implementation.requests import GetTotalNumberOfItemsRequest, \
+from .implementation.core.constants import PassThrough, CType
+from .implementation.constants import Scope, AttributeID
+from .implementation.requests import GetTotalNumberOfItemsRequest, \
     GetFolderItemsRequest, SetBrowsedPlayerRequest, SetAddressedPlayerRequest, \
     PlayItemRequest, GetElementAttributesRequest, \
     GetPlayStatusRequest, GetItemAttributesRequest, NotificationRequest
-from implementation.abstract_request import \
+from .implementation.abstract_request import \
     AbstractBrowsingCommand, AbstractAVCCommand, PassThroughRequest
 
 

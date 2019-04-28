@@ -3,19 +3,15 @@ import signal
 import dbus
 import waiting
 from functools import partial
+from waiting import TimeoutExpired
 
 from bluetool.agent import Client, _bluetooth, Agent
 from bluetool.utils import print_error
-
 try:
     from gi.repository import GObject
 except ImportError:
     import gobject as GObject
-
 from socketIO_client import SocketIO, BaseNamespace
-from waiting import TimeoutExpired
-
-WEBSERVER_PORT = 8080
 
 
 class partialmethod(partial):

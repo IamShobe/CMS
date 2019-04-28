@@ -1,9 +1,6 @@
-import time
-
-from car.bt.protocols.abstract_controller import ProtocolController
-from implementation.core.constants import Error, EventID
-from implementation.constants import Scope
-from connection import Connection
+from .connection import Connection
+from .implementation.core.constants import Error, EventID
+from ..abstract_controller import ProtocolController
 
 
 class AVCTPController(ProtocolController):

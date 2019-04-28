@@ -1,10 +1,10 @@
 from backports.functools_lru_cache import lru_cache
 
-from parameter import Parameter
-from utils import get_linked_item
-from core.constants import EventID
-from base_structure import Structure
-from constants import BatteryStatus, PlayStatus
+from .parameter import Parameter
+from .utils import get_linked_item
+from .core.constants import EventID
+from .base_structure import Structure
+from .constants import BatteryStatus, PlayStatus
 
 
 class Event(Structure):

@@ -1,11 +1,11 @@
-from collections import OrderedDict
-from numbers import Number
-
-from backports.functools_lru_cache import lru_cache
-from bitarray import bitarray
 from enum import Enum
+from numbers import Number
+from collections import OrderedDict
 
-from fields import UnknownSizeField
+from bitarray import bitarray
+from backports.functools_lru_cache import lru_cache
+
+from .fields import UnknownSizeField
 
 
 class Packet(object):

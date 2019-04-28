@@ -1,6 +1,6 @@
-from constants import PDU, CType, PassThrough
-from abstract_packet import Packet
-from fields import Field, UnknownSizeField
+from .abstract_packet import Packet
+from .fields import Field, UnknownSizeField
+from .constants import PDU, CType, PassThrough
 
 
 class AVRTPPacket(Packet):

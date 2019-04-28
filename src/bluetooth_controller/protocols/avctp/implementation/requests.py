@@ -1,11 +1,11 @@
-from list import List
-from items import Item
-from events import Event
-from core import constants
-from data_types import Attribute, FolderName
-from constants import Scope, AttributeID, PlayStatus, Direction
-from parameter import Parameter, ConstantSizeParameter, ComplexParameter
-from abstract_request import AbstractControlRequest, AbstractBrowseRequest, \
+from .list import List
+from .items import Item
+from .events import Event
+from .core import constants
+from .data_types import Attribute, FolderName
+from .constants import Scope, AttributeID, PlayStatus, Direction
+from .parameter import Parameter, ConstantSizeParameter, ComplexParameter
+from .abstract_request import AbstractControlRequest, AbstractBrowseRequest, \
     AbstractBrowseResponse, AbstractControlResponse
 
 

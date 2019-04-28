@@ -3,7 +3,7 @@ from collections import namedtuple
 
 import vobject
 
-from car.bt.protocols.pbap import convert
+from bluetooth_controller import convert
 
 
 def fix_encoding_issues(text):
