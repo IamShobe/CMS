@@ -1,8 +1,10 @@
 import logging
+import time
 
 
 class ProtocolController(object):
     SERVICE_CLASS = NotImplemented
+    MAX_TRIES = 5
 
     def __init__(self, address, logger=logging.getLogger("Bluetooth")):
         self.address = address
@@ -24,7 +26,20 @@ class ProtocolController(object):
 
     def connect(self, port):
         self.log("Making connection to: {}".format(self.address))
-        self.connection = self._connect(port)
+        tries = 0
+        while True:
+            try:
+                self.connection = self._connect(port)
+                break
+
+            except Exception as e:
+                if tries > self.MAX_TRIES:
+                    raise e
+                tries += 1
+
+                self.log("Cannot connect to device, trying again...")
+                time.sleep(1)
+
         self.log("Connected!")
 
     def _connect(self, port):

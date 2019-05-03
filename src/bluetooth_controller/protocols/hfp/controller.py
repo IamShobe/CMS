@@ -10,6 +10,7 @@ hfp_logger = logging.getLogger("hfp-protocol")
 
 class HFPController(ProtocolController):
     SERVICE_CLASS = "111F"
+    DEFAULT_PORT = 3
 
     def write_message(self, msg, context="General"):
         self.log("Writing: {}".format(msg), context=context, logger=hfp_logger)

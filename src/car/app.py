@@ -14,34 +14,11 @@ connection = None
 actions = []
 
 
-@app.route('/api/bluetooth/devices/scan/')
-def scan_devices():
-    data = requests.get("http://localhost:8090/api/devices/scan")
-    response = app.response_class(
-        response=data,
-        status=200,
-        mimetype='application/json'
-    )
-
-    return response
-
-
-@app.route('/api/bluetooth/devices/')
-def get_devices():
-    data = requests.get("http://localhost:8090/api/devices")
-    response = app.response_class(
-        response=data,
-        status=200,
-        mimetype='application/json'
-    )
-
-    return response
-
-
-@app.route('/api/bluetooth/pair/', methods=["POST"])
-def connect_device():
-    data = requests.post("http://localhost:8090/api/pair",
-                         json=request.json)
+@app.route('/api/bluetooth/<path:path>', methods=["GET", "POST",
+                                                  "PUT", "DELETE"])
+def bluetooth(path):
+    data = requests.request(request.method,
+                            "http://localhost:8090/api/{}".format(path))
     response = app.response_class(
         response=data,
         status=data.status_code,
@@ -49,6 +26,31 @@ def connect_device():
     )
 
     return response
+
+
+# @app.route('/api/bluetooth/devices/')
+# def get_devices():
+#     data = requests.get("http://localhost:8090/api/devices")
+#     response = app.response_class(
+#         response=data,
+#         status=200,
+#         mimetype='application/json'
+#     )
+#
+#     return response
+#
+#
+# @app.route('/api/bluetooth/devices/pair/', methods=["POST"])
+# def connect_device():
+#     data = requests.post("http://localhost:8090/api/devices/pair",
+#                          json=request.json)
+#     response = app.response_class(
+#         response=data,
+#         status=data.status_code,
+#         mimetype='application/json'
+#     )
+#
+#     return response
 
 
 @socketio.on('connect')

@@ -6,6 +6,7 @@ from ..abstract_controller import ProtocolController
 
 class PBAPController(ProtocolController):
     SERVICE_CLASS = "112F"
+    DEFAULT_PORT = 5
 
     def _connect(self, port):
         obex_client = client.Client(self.address, port)

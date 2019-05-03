@@ -6,13 +6,10 @@ import AlertDialogSlide from "./utils/notification";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import IconButton from "@material-ui/core/IconButton";
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group'; // ES6
 import {withStyles} from '@material-ui/core/styles';
 
-import Fab from '@material-ui/core/Fab';
 import BackIcon from '@material-ui/icons/ArrowBackIosOutlined';
 import BluetoothIcon from '@material-ui/icons/SettingsBluetoothOutlined';
-import SearchIcon from '@material-ui/icons/Search';
 import MoreIcon from '@material-ui/icons/MoreVert';
 import Typography from "@material-ui/core/Typography";
 import Clock from 'react-live-clock';
@@ -25,6 +22,7 @@ import TransitionGroup from "react-transition-group/TransitionGroup";
 import CSSTransition from "react-transition-group/CSSTransition";
 import "./style.scss";
 import "./test_transitions.scss";
+import DevicesManager from "./structures/devices_manager";
 
 const styles = theme => ({
     text: {
@@ -55,16 +53,23 @@ const styles = theme => ({
         flex: 1
     },
     toolbar: {
-        // alignItems: 'center',
-        // justifyContent: 'space-between',
+        alignItems: 'center',
+        justifyContent: 'space-between',
     },
-    fabButton: {
+    fabOptions: {
         position: 'absolute',
         zIndex: 1,
         top: -30,
         left: 0,
         right: 0,
+        width: 200,
         margin: '0 auto',
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        "& *": {
+            zIndex: 1
+        }
     },
 });
 
@@ -79,28 +84,35 @@ class App extends React.Component {
         super(props);
         this.state = {
             book: [],
-            devices: {},
             selectedScreen: "Index",
-            screensStack: ["Index"]
+            screensStack: ["Index"],
+            buttons: []
         };
-        const socket = io();
-        const nsp = io('/client', {forceNew: true});
+        this.socket = io();
+        this.nsp = io('/client', {forceNew: true});
+        this.bindSocket();
 
         this.notification = React.createRef();
-        // this.find_devices = React.createRef();
-        // this.manager = new Manager();
-        // this.devices_track = 0;
 
-        socket.on('connect', function () {
+        this.bluetoothScreen = <BluetoothScreen app={this}
+                                                searchDevices={this.searchDevices}
+        />;
+
+        this.phonebookScreen = <PhoneBookScreen app={this}/>;
+        this.indexScreen = <IndexScreen app={this}/>;
+    }
+
+    bindSocket() {
+        this.socket.on('connect', function () {
             console.log("connected!")
         });
-        socket.on('event', function (data) {
+        this.socket.on('event', function (data) {
             console.log(`event:`, data)
         });
-        socket.on('message', function (data) {
+        this.socket.on('message', function (data) {
             console.log(`message:`, data)
         });
-        nsp.on('pairing_request', (data) => {
+        this.nsp.on('pairing_request', (data) => {
             console.log(`paring:`, data);
             console.log('address:', data.mac_address);
             this.notification.current.openWithMessage(
@@ -109,28 +121,19 @@ class App extends React.Component {
                 `address: ${data.mac_address}\n` +
                 `pin code: ${data.pin_code[0]}`,
                 (accepted) => {
-                    nsp.emit("pair_response", {
+                    this.nsp.emit("pair_response", {
                         address: data.mac_address,
                         accepted: accepted
                     });
                 }
             );
         });
-        socket.on('disconnect', function () {
+        this.socket.on('disconnect', function () {
             console.log("disconnected!")
         });
-        socket.on('bg_emit', function (data) {
+        this.socket.on('bg_emit', function (data) {
             console.log(`bg emitting:`, data)
         });
-        this.socket = socket;
-    }
-
-
-    updateDevices(devices) {
-        this.setState({
-            ...this.state,
-            devices: devices
-        })
     }
 
     selectScreen(screenName) {
@@ -163,21 +166,28 @@ class App extends React.Component {
         this.setState({
             ...this.state,
             selectedScreen: new_screen,
-            screensStack: newStack
+            screensStack: newStack,
+            buttons: []
         })
     }
 
     renderScreen() {
         switch (this.state.selectedScreen) {
             case "Bluetooth":
-                return <BluetoothScreen app={this}
-                                        devices={this.state.devices}/>;
+                return this.bluetoothScreen;
             case "Contacts":
-                return <PhoneBookScreen app={this}/>;
+                return this.phonebookScreen;
 
             default:
-                return <IndexScreen app={this}/>;
+                return this.indexScreen;
         }
+    }
+
+    setButtons(buttons) {
+        this.setState({
+            ...this.state,
+            buttons: buttons
+        })
     }
 
     hasStack() {
@@ -198,8 +208,6 @@ class App extends React.Component {
         const {classes} = this.props;
         return (
             <div className="container">
-                {/*<Phonebook book={this.state.book}/>*/}
-
                 <TransitionGroup className="transition-group">
                     <CSSTransition
                         key={this.state.selectedScreen}
@@ -221,10 +229,9 @@ class App extends React.Component {
                             {this.state.selectedScreen}
                         </Typography>
                         <div className={classes.spacer}/>
-                        {/*<Fab color="secondary" aria-label="Add"*/}
-                        {/*     className={classes.fabButton}>*/}
-                        {/*    <AddIcon/>*/}
-                        {/*</Fab>*/}
+                        <div className={classes.fabOptions}>
+                            {this.state.buttons}
+                        </div>
                         <div>
                             <IconButton color="inherit" onClick={() => {
                                 this.selectScreen("Bluetooth")

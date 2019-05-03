@@ -1,6 +1,5 @@
 import React from "react";
 import {List, AutoSizer} from "react-virtualized";
-// import {ScrollBox, ScrollAxes, FastTrack} from 'react-scroll-box';
 import Scrollbar from 'react-smooth-scrollbar';
 import "./phonebook.scss";
 
@@ -30,15 +29,6 @@ export default class Phonebook extends React.Component {
         this.setState({...this.state})
     }
 
-    renderList() {
-        let to_ret = [];
-        for (let index in this.props.book) {
-            to_ret.push(this.renderRow({index: index, key: index}))
-        }
-        return to_ret;
-    }
-
-
     handleScroll = (status, target) => {
         // const {scrollTop, scrollLeft} = target;
         this.list.Grid.handleScrollEvent({scrollTop:target.offset.y, scrollLeft: target.offset.x});
@@ -48,8 +38,6 @@ export default class Phonebook extends React.Component {
     render() {
         return (
             <div className="container ">
-
-                {/*{this.renderList()}*/}
                 <AutoSizer>
                     {
                         ({width, height}) => {
@@ -76,11 +64,6 @@ export default class Phonebook extends React.Component {
                         }
                     }
                 </AutoSizer>
-
-                {/*<PerfectScrollbar className="contacts">*/}
-
-
-                {/*</PerfectScrollbar>*/}
             </div>
         );
     }

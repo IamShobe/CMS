@@ -5,6 +5,7 @@ from ..abstract_controller import ProtocolController
 
 class AVCTPController(ProtocolController):
     SERVICE_CLASS = "110E"
+    DEFAULT_PORT = 23
 
     def _connect(self, port):
         connection = Connection(self.address, control_port=port)

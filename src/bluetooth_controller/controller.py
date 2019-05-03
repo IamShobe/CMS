@@ -2,8 +2,8 @@ import time
 import logging
 from logging import getLogger
 
-
 import bluetooth
+from backports.functools_lru_cache import lru_cache
 from bluetool import Bluetooth
 from cached_property import cached_property
 
@@ -32,6 +32,19 @@ class Service(object):
         self.port = port
         self.description = description
 
+    def to_dict(self):
+        return {
+            "protocol": self.protocol,
+            "name": self.name,
+            "service_id": self.service_id,
+            "profiles": self.profiles,
+            "service_classes": self.service_classes,
+            "host": self.host,
+            "provider": self.provider,
+            "port": self.port,
+            "description": self.description,
+        }
+
     def __repr__(self):
         return "{}(name={!r}, protocol={!r}, port={}, classes={!r})".format(
             self.__class__.__name__, self.name, self.protocol, self.port,
@@ -49,6 +62,10 @@ class BTDevice(object):
         self.hfp = HFPController(self.address)
         self.avctp = AVCTPController(self.address)
 
+    def is_alive(self):
+        name = bluetooth.lookup_name(self.address)
+        return name is not None
+
     @cached_property
     def services(self):
         logger.info("Fetching device services...")
@@ -59,6 +76,7 @@ class BTDevice(object):
             services = bluetooth.find_service(address=self.address)
             if len(services) == 0:
                 logger.warning("No services could be found!")
+                time.sleep(1)
                 continue
 
             to_ret = {}
@@ -75,7 +93,7 @@ class BTDevice(object):
             raise RuntimeError(
                 "Device doesn't seemed to have bluetooth services")
 
-    def pair(self):
+    def pair_and_trust(self):
         logger.info("Pairing and trusting device...")
         success = self.adapter.pair(self.address)
         if not success:
@@ -89,18 +107,32 @@ class BTDevice(object):
 
         logger.info("Paired and trusted successfully")
 
+    def get_service_port(self, service):
+        try:
+            return self.services[service.SERVICE_CLASS].port
+
+        except:
+            logger.warning("default port chosen!")
+            return service.DEFAULT_PORT
+
     def connect(self):
         logger.info("Connecting to all available services...")
-        self.pair()
+        self.pair_and_trust()
 
-        self.pbap.connect(self.services[self.pbap.SERVICE_CLASS].port)
+        self.pbap.connect(self.get_service_port(self.pbap))
         logger.info("Service pbap connected!")
-        self.hfp.connect(self.services[self.hfp.SERVICE_CLASS].port)
+        self.hfp.connect(self.get_service_port(self.hfp))
         logger.info("Service hfp connected!")
-        self.avctp.connect(self.services[self.avctp.SERVICE_CLASS].port)
+        self.avctp.connect(self.get_service_port(self.avctp))
         logger.info("Service avctp connected!")
 
         logger.info("All services connected!")
+
+    def remove(self):
+        success = self.adapter.remove(self.address)
+        if not success:
+            logger.error("Could not pair remove device")
+            raise RuntimeError("Could not remove with device")
 
     def close(self):
         logger.info("Closing all available services connections...")
@@ -121,27 +153,43 @@ class BTController(object):
     FINDING_TRIES = 3
 
     def __init__(self):
-        self.cached_addresses = {}
         self.adapter = Bluetooth()
+
+    @classmethod
+    def edit_devices_data(cls, devices):
+        actual_devices = bluetooth.discover_devices(duration=1)
+        for device in devices:
+            device["alive"] = device["mac_address"] in actual_devices
+
+        return devices
+
+    @property
+    def available_devices(self):
+        return self.edit_devices_data(self.adapter.get_available_devices())
+
+    @property
+    def connected_devices(self):
+        return self.adapter.get_connected_devices()
+
+    @property
+    def paired_devices(self):
+        return self.adapter.get_paired_devices()
+
+    @property
+    def devices_to_pair(self):
+        return self.adapter.get_devices_to_pair()
 
     def probe_devices(self):
         logger.info("Probing for nearby devices...")
         self.adapter.scan()
-        devices = self.adapter.get_available_devices()
-        for device in devices:
-            device_name = device["name"]
-            device_address = device["mac_address"]
-            self.cached_addresses[device_name.lower()] = device_address
-            logger.debug("Discovered device: {} - {}".format(device_name,
-                                                             device_address))
-
-        return self.cached_addresses
+        return self.available_devices
 
     def get_address_from_cache(self, name):
-        if name.lower() not in self.cached_addresses:
+        cached = self.available_devices
+        if name.lower() not in cached:
             return None
 
-        address = self.cached_addresses[name.lower()]
+        address = cached[name.lower()]
         logger.debug(
             "Device `{}` located in scans cache: {}".format(
                 name, address))
@@ -166,6 +214,7 @@ class BTController(object):
             logger.error("Device `{}` couldn't be found".format(name))
             raise RuntimeError("Device `{}` couldn't be found!".format(name))
 
+    @lru_cache()
     def get_client(self, address):
         return BTDevice(address, self.adapter)
 

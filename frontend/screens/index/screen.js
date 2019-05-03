@@ -2,6 +2,7 @@ import React from "react";
 
 import Application from "./application";
 import phonebook_icon from "./system_contacts.png";
+import music_icon from "./music_icon.png";
 
 import {withStyles} from "@material-ui/core";
 import "./screen.scss";
@@ -39,9 +40,13 @@ class IndexScreen extends React.Component {
 
             <div className="container screen">
                 <div className={classes.app_drawer}>
-                    <Application image_src={phonebook_icon}
+                    <Application image_src={phonebook_icon} name={"Contacts"}
                                  callback={() => {
                                      this.app.selectScreen("Contacts")
+                                 }}/>
+                    <Application image_src={music_icon} name={"Music"}
+                                 callback={() => {
+                                     this.app.selectScreen("Music")
                                  }}/>
                     {/*<div className={classes.spacer}></div>*/}
                 </div>

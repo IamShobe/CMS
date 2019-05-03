@@ -4,14 +4,20 @@ import {withStyles} from "@material-ui/core";
 
 const styles = {
     application: {
-        width: "100px",
-        height: "100px",
         cursor: "pointer",
         margin: "12px 30px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center"
     },
     innerImage: {
-        width: "100%",
-        height: "100%",
+        width: "100px",
+        height: "100px",
+    },
+    name: {
+        margin: 5
+
     }
 };
 
@@ -20,6 +26,7 @@ class Application extends React.Component {
         super(props);
         this.state = {
             image_src: props.image_src,
+            name: props.name,
             callback: props.callback
         }
     }
@@ -28,6 +35,7 @@ class Application extends React.Component {
         return {
             ...this.state,
             image_src: nextProps.image_src,
+            name: nextProps.name,
             callback: nextProps.callback
         }
     }
@@ -37,6 +45,7 @@ class Application extends React.Component {
         return (
             <div className={classes.application} onClick={this.state.callback}>
                 <img className={classes.innerImage} src={this.state.image_src}/>
+                <div className={classes.name}>{this.state.name}</div>
             </div>
         );
     }
