@@ -43,6 +43,7 @@ class ParingNamespace(BaseNamespace):
 class MyClient(Client):
     def __init__(self, *args, **kwargs):
         super(MyClient, self).__init__(*args, **kwargs)
+        print("print running")
 
     def request_pin_code(self, dev_info):
         print(dev_info)
