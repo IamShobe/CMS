@@ -53,4 +53,4 @@ vobject==0.9.6.1
 waiting==1.4.1
 wcwidth==0.1.7
 websocket-client==0.56.0
-Werkzeug==0.15.2
+Werkzeug==0.15.3
