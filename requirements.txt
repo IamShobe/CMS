@@ -12,7 +12,7 @@ dbus-python==1.2.8
 decorator==4.4.0
 dnspython==1.16.0
 enum34==1.1.6
-eventlet==0.25.1
+eventlet==0.31.0
 Flask==1.0.2
 Flask-SocketIO==4.2.1
 gattlib==0.20150805
