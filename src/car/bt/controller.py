@@ -187,7 +187,7 @@ if __name__ == '__main__':
     #
     # with open('phonebook.json', "wb") as f:
     #     json.dump([contact.to_dict() for contact in phone_book], f)
-
+    import ipdb; ipdb.set_trace()
     device.close()
 
     # controller.get_phonebook()
